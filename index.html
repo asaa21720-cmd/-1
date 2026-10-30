@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Caesar Cipher & Hash (SHA)</title>
+  <style>
+:root {
+  --bg: #eef2f1;
+  --surface: #ffffff;
+  --ink: #17262b;
+  --muted: #5d6f75;
+  --line: #cfdad8;
+  --accent: #0f6b66;
+  --accent-ink: #ffffff;
+  --header: #123a3d;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", Arial, sans-serif;
+  line-height: 1.7;
+}
+
+.wrap {
+  width: min(1100px, 100% - 2rem);
+  margin-inline: auto;
+}
+
+.site-header {
+  background: var(--header);
+  color: #fff;
+  padding: 2rem 0;
+}
+.site-header h1 { margin: 0 0 .4rem; font-size: 1.7rem; }
+.site-header p { margin: 0; opacity: .85; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+.card-title { margin: 0 0 .5rem; font-size: 1.25rem; color: var(--accent); }
+.muted { color: var(--muted); margin: 0 0 1rem; font-size: .95rem; }
+
+.label { display: block; margin: .8rem 0 .3rem; font-weight: 600; }
+
+textarea, input, select {
+  width: 100%;
+  padding: .6rem .75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  background: #fbfdfd;
+  color: var(--ink);
+}
+textarea { min-height: 90px; resize: vertical; }
+textarea[readonly] { background: #f1f5f4; direction: ltr; text-align: left; word-break: break-all; }
+#caesarInput, #hashInput { direction: ltr; text-align: left; }
+
+.row { display: flex; gap: 1rem; }
+.col { flex: 1; }
+
+.btn-row { display: flex; gap: .6rem; margin: 1rem 0 .4rem; }
+
+button {
+  font: inherit;
+  padding: .6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid var(--accent);
+}
+button.primary { background: var(--accent); color: var(--accent-ink); }
+button.ghost { background: transparent; color: var(--accent); }
+button:hover { filter: brightness(1.08); }
+
+:focus-visible { outline: 3px solid #e0a526; outline-offset: 2px; }
+
+.hint { margin-top: .8rem; font-size: .9rem; color: var(--muted); }
+
+.site-footer {
+  padding: 1.2rem 0 2rem;
+  color: var(--muted);
+  font-size: .9rem;
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .grid { grid-template-columns: 1fr; }
+  .row { flex-direction: column; gap: 0; }
+}
+
+</style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>موقع التشفير وفك التشفير (Caesar) + حساب Hash</h1>
+      <p>استخدم القسم الأول لـ Caesar، والقسم الثاني لـ Hash (SHA-256 / SHA-512).</p>
+    </div>
+  </header>
+
+  <main class="wrap grid">
+    <!-- Caesar -->
+    <section class="card">
+      <h2 class="card-title">1) Caesar Cipher</h2>
+      <p class="muted">
+        يشفّر حروف الإنجليزي (A-Z / a-z) والأرقام (0-9). يبقى أي رمز/مسافة كما هي.
+      </p>
+
+      <label class="label" for="caesarInput">النص:</label>
+      <textarea id="caesarInput" placeholder="مثال: HELLO"></textarea>
+
+      <div class="row">
+        <div class="col">
+          <label class="label" for="caesarShift">Shift (مفتاح الإزاحة):</label>
+          <input id="caesarShift" type="number" value="3" />
+        </div>
+        <div class="col">
+          <label class="label" for="caesarMode">النتيجة:</label>
+          <select id="caesarMode">
+            <option value="encrypt" selected>تشفير</option>
+            <option value="decrypt">فك تشفير</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="primary" onclick="runCaesar()">تنفيذ</button>
+        <button type="button" class="ghost" onclick="swapExample('caesar')">مثال جاهز</button>
+      </div>
+
+      <label class="label" for="caesarOutput">الناتج:</label>
+      <textarea id="caesarOutput" readonly></textarea>
+
+      <div class="hint">
+        فك التشفير يتم بالاتجاه العكسي لنفس قيمة الـ Shift.
+      </div>
+    </section>
+
+    <!-- Hash -->
+    <section class="card">
+      <h2 class="card-title">2) Hash (SHA)</h2>
+      <p class="muted">
+        الـ Hash أحادي الاتجاه: لا يوجد "فك تشفير".
+        تقدر فقط تقارن الهاش الناتج.
+      </p>
+
+      <label class="label" for="hashInput">النص المراد حساب هاشه:</label>
+      <textarea id="hashInput" placeholder="مثال: hello"></textarea>
+
+      <div class="row">
+        <div class="col">
+          <label class="label" for="hashAlgo">اختر الخوارزمية:</label>
+          <select id="hashAlgo">
+            <option value="SHA-256" selected>SHA-256</option>
+            <option value="SHA-512">SHA-512</option>
+          </select>
+        </div>
+        <div class="col">
+          <label class="label" for="hashFormat">صيغة الإخراج:</label>
+          <select id="hashFormat">
+            <option value="hex" selected>Hex</option>
+            <option value="base64">Base64</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="primary" onclick="runHash()">احسب Hash</button>
+        <button type="button" class="ghost" onclick="swapExample('hash')">مثال جاهز</button>
+      </div>
+
+      <label class="label" for="hashOutput">Hash الناتج:</label>
+      <textarea id="hashOutput" readonly></textarea>
+
+      <div class="hint">
+        كل مرة تدخل نفس النص وبنفس الخوارزمية راح يطلع نفس الهاش.
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© مشروع تخرج — Caesar Cipher + Hash (SHA)</span>
+    </div>
+  </footer>
+
+  <script>
+// ---------- Caesar Cipher ----------
+function caesarShift(text, shift) {
+  // الحروف: إزاحة مودولو 26 | الأرقام: إزاحة مودولو 10
+  const s26 = ((shift % 26) + 26) % 26;
+  const s10 = ((shift % 10) + 10) % 10;
+
+  return text.replace(/[A-Za-z0-9\u0660-\u0669]/g, function (ch) {
+    const code = ch.charCodeAt(0);
+
+    if (code >= 48 && code <= 57) {          // 0-9
+      return String.fromCharCode(((code - 48 + s10) % 10) + 48);
+    }
+    if (code >= 0x0660 && code <= 0x0669) {  // ٠-٩ (أرقام عربية)
+      return String.fromCharCode(((code - 0x0660 + s10) % 10) + 0x0660);
+    }
+    const base = ch <= "Z" ? 65 : 97;        // A = 65, a = 97
+    return String.fromCharCode(((code - base + s26) % 26) + base);
+  });
+}
+
+function runCaesar() {
+  const input = document.getElementById("caesarInput").value;
+  const shiftValue = parseInt(document.getElementById("caesarShift").value, 10);
+  const mode = document.getElementById("caesarMode").value;
+  const output = document.getElementById("caesarOutput");
+
+  if (isNaN(shiftValue)) {
+    output.value = "الرجاء إدخال رقم صحيح في خانة Shift.";
+    return;
+  }
+
+  const shift = mode === "encrypt" ? shiftValue : -shiftValue;
+  output.value = caesarShift(input, shift);
+}
+
+// ---------- Hash (SHA) ----------
+function bufferToHex(buffer) {
+  return Array.from(new Uint8Array(buffer))
+    .map(function (b) { return b.toString(16).padStart(2, "0"); })
+    .join("");
+}
+
+function bufferToBase64(buffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+async function runHash() {
+  const input = document.getElementById("hashInput").value;
+  const algo = document.getElementById("hashAlgo").value;
+  const format = document.getElementById("hashFormat").value;
+  const output = document.getElementById("hashOutput");
+
+  if (!window.crypto || !window.crypto.subtle) {
+    output.value =
+      "المتصفح لا يدعم crypto.subtle. افتح الصفحة عبر https أو localhost.";
+    return;
+  }
+
+  try {
+    const data = new TextEncoder().encode(input);
+    const digest = await crypto.subtle.digest(algo, data);
+    output.value = format === "hex" ? bufferToHex(digest) : bufferToBase64(digest);
+  } catch (err) {
+    output.value = "حدث خطأ أثناء حساب الهاش: " + err.message;
+  }
+}
+
+// ---------- أمثلة جاهزة ----------
+function swapExample(type) {
+  if (type === "caesar") {
+    document.getElementById("caesarInput").value = "HELLO WORLD";
+    document.getElementById("caesarShift").value = 3;
+    document.getElementById("caesarMode").value = "encrypt";
+    runCaesar(); // الناتج المتوقع: KHOOR ZRUOG
+  } else if (type === "hash") {
+    document.getElementById("hashInput").value = "hello";
+    document.getElementById("hashAlgo").value = "SHA-256";
+    document.getElementById("hashFormat").value = "hex";
+    runHash();
+  }
+}
+
+</script>
+</body>
+</html>
